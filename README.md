@@ -66,7 +66,7 @@ Run the backend development server:
 
 ```bash
 cd backend
-npm run dev
+node server.js
 ```
 
 ## Token Generation
