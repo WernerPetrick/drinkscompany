@@ -1,47 +1,53 @@
 import { useEffect, useState, useRef } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import './App.css';
 
 const EnterPage = () => {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const token = searchParams.get('token');
   const [message, setMessage] = useState('');
-  const [loading, setLoading] = useState(true);
-  const [status, setStatus] = useState('pending'); 
+  const [loading, setLoading] = useState(false);
+  const [status, setStatus] = useState('pending');
+  const [manualToken, setManualToken] = useState('');
 
   const hasFetched = useRef(false);
 
-useEffect(() => {
-  if (!token || hasFetched.current) return;
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (manualToken.trim()) {
+      navigate(`?token=${manualToken.trim()}`);
+    }
+  };
 
-  hasFetched.current = true;
-  setLoading(true);
+  useEffect(() => {
+    if (!token || hasFetched.current) return;
 
-  fetch(`http://localhost:3000/api/enter?token=${token}`)
-    .then(async (response) => {
-      const data = await response.json();
+    hasFetched.current = true;
+    setLoading(true);
 
-      if (!response.ok) {
-        throw new Error(data.error || "Something went wrong");
-      }
+    fetch(`http://localhost:3000/api/enter?token=${token}`)
+      .then(async (response) => {
+        const data = await response.json();
 
-      return data;
-    })
-    .then((data) => {
-      setStatus('success');
-      setMessage(data.message);
-    })
-    .catch((err) => {
-      setStatus('error');
-      setMessage(err.message);
-    })
-    .finally(() => {
-      setLoading(false);
-    });
+        if (!response.ok) {
+          throw new Error(data.error || "Something went wrong");
+        }
 
-}, [token]);
-
-  
+        return data;
+      })
+      .then((data) => {
+        setStatus('success');
+        setMessage(data.message);
+      })
+      .catch((err) => {
+        setStatus('error');
+        setMessage(err.message);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, [token]);
 
   return (
     <div className="container">
@@ -53,7 +59,20 @@ useEffect(() => {
         />
         <h1>DrinksCompany Competition Entry</h1>
         
-        {loading ? (
+        {!token ? (
+          <div className="token-form">
+            <form onSubmit={handleSubmit}>
+              <input
+                type="text"
+                value={manualToken}
+                onChange={(e) => setManualToken(e.target.value)}
+                placeholder="Enter your token"
+                required
+              />
+              <button type="submit">Submit Token</button>
+            </form>
+          </div>
+        ) : loading ? (
           <div className="loader">
             <div className="spinner"></div>
             <p>Checking your token...</p>
